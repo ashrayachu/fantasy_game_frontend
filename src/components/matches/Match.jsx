@@ -3,9 +3,12 @@ import { getAllMatches } from "../../api/getBackendData";
 import { useNavigate } from "react-router-dom";
 import useMatchStore from "../../store/useMatchStore";
 
+import Options from "./Options.jsx"
+import AdBanner from "./AdBanner.jsx"
+
+
 const Match = () => {
     const navigate = useNavigate();
-
 
     const { matches, loading, error, setMatches, setLoading, setError } = useMatchStore();
 
@@ -31,36 +34,76 @@ const Match = () => {
         fetchMatches();
     }, [setMatches, setLoading, setError]);
 
-    useEffect(() => {
-        console.log("Matches", matches);
-    }, [matches]);
+
+
+    const getMatchNumber = (index) => {
+        return `${index + 10}th IPL Match`;
+    };
 
     return (
-        <section className="matches-page min-h-screen">
-            <h1 className="bg-red-500 text-red-700">Hello world</h1>
-            <h1 className="text-3xl font-bold underline">cricket matches</h1>
+        <section className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50">
+            <Options />
 
-            {loading && <p>Loading matches...</p>}
-            {error && <p className="text-red-500">Error: {error}</p>}
-            {!loading && !error && matches.length === 0 && (
-                <p>No matches available.</p>
-            )}
-
-            <div>
-                {matches?.map((match) => (
-                    <div
-                        key={match.id}
-                        className="bg-white p-4 m-2 rounded shadow cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => navigate(`/select-players/${match.event_id}`)}
-                    >
-                        <h2 className="text-xl font-semibold">
-                            {match.t1_short_name || match.teamA} vs {match.t2_short_name || match.teamB}
-                        </h2>
-                        <p className="text-gray-600">
-                            Time: {new Date(match.match_date || match.time).toLocaleString()}
-                        </p>
+            <div className="max-w-2xl mx-auto px-4 py-6">
+                {loading && (
+                    <div className="text-center py-8">
+                        <p className="text-gray-600">Loading matches...</p>
                     </div>
-                ))}
+                )}
+
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <p className="text-red-600">Error: {error}</p>
+                    </div>
+                )}
+
+                {!loading && !error && matches.length === 0 && (
+                    <div className="text-center py-8">
+                        <p className="text-gray-600">No matches available.</p>
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    {matches?.map((match, index) => {
+                        const teamA = match.t1_short_name || match.teamA;
+                        const teamB = match.t2_short_name || match.teamB;
+
+                        return (
+                            <div
+                                key={match.id}
+                                className="bg-gradient-to-br from-white to-purple-50 rounded-2xl shadow-md p-6 cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                onClick={() => navigate(`/select-players/${match.event_id}`)}
+                            >
+                                <p className="text-center text-gray-500 text-sm mb-4">
+                                    {getMatchNumber(index)}
+                                </p>
+
+                                <div className="flex items-center justify-between">
+                                    {/* Team A */}
+                                    <div className="flex flex-col items-center">
+                                        <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-2 shadow-lg">
+                                            <img src="https://s3.ap-south-1.amazonaws.com/leaguex/team-images/bblw/PERW.png" />
+                                        </div>
+                                        <span className="font-bold text-gray-800 text-sm">{teamA}</span>
+                                    </div>
+
+                                    {/* VS */}
+                                    <div className="flex flex-col items-center px-4">
+                                        <span className="text-3xl font-bold text-gray-800">VS</span>
+                                    </div>
+
+                                    {/* Team B */}
+                                    <div className="flex flex-col items-center">
+                                        <div className="w-16 h-16  rounded-full flex items-center justify-center text-3xl mb-2 shadow-lg">
+                                            <img src="https://s3.ap-south-1.amazonaws.com/leaguex/team-images/bblw/MLSW.png" />
+                                        </div>
+                                        <span className="font-bold text-gray-800 text-sm">{teamB}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </section>
     );

@@ -6,10 +6,10 @@ import useMatchStore from "../../store/useMatchStore";
 import useEventStore from "../../store/useEventStore";
 
 const Selectplayers = () => {
-    const { event_id } = useParams();
+    const { eventId, teamId } = useParams(); // Get both from URL params
     const navigate = useNavigate();
     const { matches } = useMatchStore();
-    const { saveEventTeam, getEventTeams } = useEventStore();
+    const { saveEventTeam, getEventTeams, allTeams, updateEventTeam } = useEventStore();
 
     const [bowlers, setBowlers] = useState([]);
     const [batsman, setBatsman] = useState([]);
@@ -24,9 +24,33 @@ const Selectplayers = () => {
     });
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [showCaptainModal, setShowCaptainModal] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Load existing team if teamId is present (edit mode)
+    useEffect(() => {
+        if (teamId && allTeams) {
+            const existingTeam = allTeams.find(t => t.team_id === teamId);
+            if (existingTeam) {
+                setTeam({
+                    totalPlayers: existingTeam.totalPlayers,
+                    totalCredits: existingTeam.totalCredits,
+                    players: existingTeam.players,
+                    captain: existingTeam.captain,
+                    viceCaptain: existingTeam.viceCaptain,
+                });
+                setIsEditMode(true);
+            }
+        }
+    }, [teamId, allTeams]);
+
+    useEffect(() => {
+        console.log("team  event id", eventId)
+    }, [eventId])
 
     useEffect(() => {
         const fetchPlayers = async () => {
+            setIsLoading(true);
             try {
                 const res = await getAllPlayers();
                 const allPlayers = res.data;
@@ -43,18 +67,20 @@ const Selectplayers = () => {
                 }
             } catch (e) {
                 console.log("error fetching players:", e);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchPlayers();
     }, []);
 
     useEffect(() => {
-    if (saveSuccess) {
-        setTimeout(() => {
-            navigate('/teams');
-        }, 1500); // Navigate after a short delay to show success message
-    }
-}, [saveSuccess, navigate]);
+        if (saveSuccess) {
+            setTimeout(() => {
+                navigate('/teams');
+            }, 1500);
+        }
+    }, [saveSuccess, navigate]);
 
     const getTeamCount = (teamName) => {
         const filteredTeam = team.players.filter((player) => player.team_name === teamName);
@@ -172,17 +198,24 @@ const Selectplayers = () => {
         }
 
         const teamData = {
-            team_id: `team_${Date.now()}`,
-            event_id: event_id,
+            team_id: isEditMode ? teamId : `team_${Date.now()}`,
+            event_id: eventId,
             totalPlayers: team.totalPlayers,
             totalCredits: team.totalCredits,
             players: team.players,
             captain: team.captain,
             viceCaptain: team.viceCaptain,
-            created_at: new Date().toISOString()
+            created_at: isEditMode ? team.created_at : new Date().toISOString(),
+            updated_at: isEditMode ? new Date().toISOString() : undefined
         };
 
-        saveEventTeam(event_id, teamData);
+        if (isEditMode) {
+            console.log("event_id", eventId)
+            updateEventTeam(eventId, teamId, teamData);
+        } else {
+            saveEventTeam(eventId, teamData);
+        }
+
         setSaveSuccess(true);
         setShowCaptainModal(false);
 
@@ -190,10 +223,7 @@ const Selectplayers = () => {
             setSaveSuccess(false);
         }, 3000);
 
-        console.log("Team saved successfully:", teamData);
-        if(saveSuccess){
-            navigate('/teams')
-        }
+        console.log(`Team ${isEditMode ? 'updated' : 'saved'} successfully:`, teamData);
     };
 
     const columns = [
@@ -289,12 +319,22 @@ const Selectplayers = () => {
         },
     ];
 
+    if (isLoading) {
+        return (
+            <section className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-xl">Loading players...</div>
+            </section>
+        );
+    }
+
     return (
         <section className="min-h-screen bg-gray-50 p-4">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-5xl mx-auto">
                 <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
                     <div className="flex justify-between items-center mb-4">
-                        <h1 className="text-2xl font-bold">Select Players</h1>
+                        <h1 className="text-2xl font-bold">
+                            {isEditMode     ? 'Edit Team' : 'Select Players'}
+                        </h1>
                         <div className="flex gap-6">
                             <div>
                                 <span className="text-gray-600">Players: </span>
@@ -309,7 +349,7 @@ const Selectplayers = () => {
 
                     {saveSuccess && (
                         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                            Team saved successfully!
+                            Team {isEditMode ? 'updated' : 'saved'} successfully!
                         </div>
                     )}
 
@@ -338,12 +378,11 @@ const Selectplayers = () => {
                 </div>
 
                 <div className="mt-4 flex gap-4">
-                  
                     <button
                         onClick={handleSaveTeam}
                         className="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-lg"
                     >
-                        Save Team
+                        {isEditMode ? 'Update Team' : 'Save Team'}
                     </button>
                 </div>
             </div>
@@ -371,7 +410,6 @@ const Selectplayers = () => {
                                     </option>
                                 ))}
                             </select>
-
                         </div>
 
                         <div className="mb-6">
@@ -414,4 +452,5 @@ const Selectplayers = () => {
         </section>
     );
 };
+
 export default Selectplayers;

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { ShareAltOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import useEventStore from "../../store/useEventStore";
+import { useNavigate } from "react-router-dom"
 
 const Team = () => {
-    const { events } = useEventStore();
+    const { events, allTeams, setAllTeams } = useEventStore();
     const [allteams, setAllteams] = useState([]);
+    const navigate = useNavigate()
 
     useEffect(() => {
         if (events.length > 0) {
@@ -13,6 +15,7 @@ const Team = () => {
                 merged = [...merged, ...event.teams];
             });
             setAllteams(merged);
+            setAllTeams(merged)
         }
     }, [events]);
 
@@ -21,8 +24,8 @@ const Team = () => {
     };
 
     useEffect(() => {
-        console.log(allteams)
-    }, [allteams])
+        console.log(allTeams)
+    }, [allTeams])
 
     const TeamCard = ({ team, index }) => {
         const [isSelected, setIsSelected] = useState(index === 1);
@@ -52,10 +55,8 @@ const Team = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <button className="p-2 hover:bg-gray-200 rounded">
-                            <ShareAltOutlined className="text-gray-600" />
-                        </button>
-                        <button className="p-2 hover:bg-gray-200 rounded">
+
+                        <button onClick={() => navigate(`/edit-team/${team.event_id}/${team.team_id}`)} className="p-2 hover:bg-gray-200 rounded">
                             <EditOutlined className="text-gray-600" />
                         </button>
                         <button className="p-2 hover:bg-gray-200 rounded">
@@ -112,7 +113,7 @@ const Team = () => {
                             <p className="text-sm font-semibold">{getTeamRoleCount(team, "Bowler")}</p>
                         </div>
                     </div>
-                    <button className="bg-pink-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-pink-600">
+                    <button onClick={() => navigate(`/preview/${team.team_id}`)} className="bg-pink-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-pink-600">
                         Team Preview
                     </button>
                 </div>
@@ -141,7 +142,7 @@ const Team = () => {
                         Registration closed in : <span className="text-pink-500 font-semibold">02h 11m Left</span>
                     </p>
                     <div className="flex gap-3">
-                        <button className="flex-1 border border-pink-500 text-pink-500 py-3 rounded-lg font-medium hover:bg-pink-50">
+                        <button onClick={() => navigate(`/select-players/${events?.[0]?.event_id}`)} className="flex-1 border border-pink-500 text-pink-500 py-3 rounded-lg font-medium hover:bg-pink-50">
                             Create Team
                         </button>
                         <button className="flex-1 bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600">
